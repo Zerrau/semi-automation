@@ -26,9 +26,9 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Аксёнов'
-firstName = u'Андрей'
-patrName = u'Александрович'
+lastName = u'Тест'
+firstName = u'Тест'
+patrName = u'Тест'
 
 
 # FUNCTIONS:
