@@ -1,5 +1,7 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
+import random
+
 from mysql import connector
 
 HOST = '192.168.0.3'
@@ -10,6 +12,10 @@ PASSWORD = 'dbpassword'
 
 db = connector.connect(host=HOST, user=USER, passwd=PASSWORD, database=DB, port=PORT)
 db_cursor = db.cursor()
+
+policy_num = random.randint(1000000000000, 9999999999999)
+contact_num = random.randint(89900000000, 89999999999)
+snils_num = random.randint(00000000000, 99999999999)
 
 
 def get_stmt(stmt):
@@ -26,7 +32,7 @@ def get_client_id():
                        `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, `IIN`, 
                        `isUnconscious`, `chronicalMKB`)
     VALUES ('2020-02-12T18:29:40', 614, '2020-02-12T18:29:40', 614, 'Тест', 'Тест', 'Тест', '1999-07-25', '00:00:00',
-            1, '11111111145', '', '0', '0', '0', '', '', '2020-02-12', '', '', 0, '')"""
+            1, '{snils_num}', '', '0', '0', '0', '', '', '2020-02-12', '', '', 0, '')""".format(snils_num=snils_num)
     result = get_stmt(add_client_stmt)
     return result
 
@@ -37,7 +43,8 @@ def add_client_policy(client_id):
                              `client_id`, `insurer_id`, `policyType_id`, `policyKind_id`, `serial`, `number`, `begDate`,
                              `endDate`, `name`, `note`, `insuranceArea`)
     VALUES ('2020-02-17T11:09:42', 877, '2020-02-17T11:09:42', 877, 0, {client_id}, 3307, 1, 3, 'ЕП', 
-    '6124156121456124', '2020-02-17', '2200-01-01', 'РОСНО', 'СПБ', '7800000000000')""".format(client_id=client_id)
+    '6124156121456124', '2020-02-17', '2200-01-01', 'РОСНО', 'СПБ', '{policy_num}')""".format(client_id=client_id,
+                                                                                              policy_num=policy_num)
     result = get_stmt(client_policy_stmt)
     return result
 
@@ -46,8 +53,8 @@ def add_client_contract(client_id):
     client_contact_stmt = u"""
     INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                               `client_id`, `contactType_id`, `isPrimary`, `contact`,`notes`)
-    VALUES ('2020-02-17T11:09:42', 877, '2020-02-17T11:09:42', 877, 0, {client_id}, 3, 1, '7777777777777','')
-    """.format(client_id=client_id)
+    VALUES ('2020-02-17T11:09:42', 877, '2020-02-17T11:09:42', 877, 0, {client_id}, 3, 1, '{contact_num}','')
+    """.format(client_id=client_id, contact_num=contact_num)
     result = get_stmt(client_contact_stmt)
     return result
 
@@ -78,6 +85,27 @@ def get_address_id(address_house_id):
     """.format(address_house_id=address_house_id)
     result = get_stmt(add_address_stmt)
     return result
+
+
+# def checkSNILSEntered(self):
+#     SNILS = unformatSNILS(forceStringEx(self.edtSNILS.text()))
+#     if SNILS:
+#         if len(SNILS) != 11:
+#             self.checkInputMessage(u'CНИЛС', True, self.edtSNILS)
+#             return False
+#         elif not checkSNILS(SNILS):
+#             fixedSNILS = formatSNILS(fixSNILS(SNILS))
+#             res = QtGui.QMessageBox.question(self,
+#                                              u'Внимание!',
+#                                              u'СНИЛС указан с ошибкой.\nПравильный СНИЛС %s\nИсправить?' % fixedSNILS,
+#                                              QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+#                                              QtGui.QMessageBox.Yes)
+#             if res == QtGui.QMessageBox.Yes:
+#                 self.edtSNILS.setText(fixedSNILS)
+#             else:
+#                 self.edtSNILS.setFocus(QtCore.Qt.ShortcutFocusReason)
+#                 return False
+#     return True
 
 
 client_id = get_client_id()
