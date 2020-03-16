@@ -7,7 +7,7 @@ from mysql import connector
 
 # SETTINGS
 HOST = '192.168.0.3'
-DB = 'ptd5_1110'
+DB = 'p17_testspb'
 PORT = '3306'
 USER = 'dbuser'
 PASSWORD = 'dbpassword'
@@ -27,13 +27,22 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Васильев'
-firstName = u'Василий'
+lastName = u'Чуть'
+firstName = u'чуть'
 patrName = u'Васильевич'
+policy_type_name = u'ДМС'  # ОМС/ДМС
 
 
 # FUNCTIONS:
-def get_stmt(stmt):
+def select_stmt(stmt):
+    if DB_DEBUG:
+        print stmt
+    db_cursor.execute(stmt)
+    fetch_all = db_cursor.fetchall()
+    return list(i for i in fetch_all)
+
+
+def insert_stmt(stmt):
     if DB_DEBUG:
         print stmt
     db_cursor.execute(stmt)
@@ -48,7 +57,7 @@ def unformatSNILS(SNILS):
 def calcSNILSCheckCode(SNILS):
     result = 0
     for i in xrange(9):
-        result += (9-i)*int(SNILS[i])
+        result += (9 - i) * int(SNILS[i])
     result = result % 101
     if result == 100:
         result = 0
@@ -64,7 +73,7 @@ def checkSNILS(SNILS):
 
 def fixSNILS(SNILS):
     raw = unformatSNILS(SNILS)
-    return (raw+'0'*11)[:9] + calcSNILSCheckCode(raw)
+    return (raw + '0' * 11)[:9] + calcSNILSCheckCode(raw)
 
 
 def checkSNILSEntered(SNILS):
@@ -95,19 +104,32 @@ VALUES ('2020-02-12T18:29:40', 1, '2020-02-12T18:29:40', 1,
         '0', 'СПБ', '', '2020-02-12', '', 
         '', 0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName,
                              birthDate=birthDate, snils=snils)
-    result = get_stmt(add_client_stmt)
+    result = insert_stmt(add_client_stmt)
     return result
 
 
+def get_format_policy():
+    policyTypeStmt = u"""
+SELECT ClientPolicy.policyType_id
+FROM ClientPolicy
+INNER join rbPolicyType ON ClientPolicy.policyType_id = rbPolicyType.id
+WHERE rbPolicyType.name LIKE '%{policy_type_name}%'
+AND deleted = 0
+LIMIT 1""".format(policy_type_name=policy_type_name)
+    result = select_stmt(policyTypeStmt)
+    return result[0][0]
+
+
 def add_client_policy(client_id):
+    policyType = get_format_policy()
     client_policy_stmt = u"""
 INSERT INTO ClientPolicy(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
-                         `client_id`, `insurer_id`, `policyType_id`, `policyKind_id`, `serial`, `number`, `begDate`,
+                         `client_id`, `insurer_id`, policyType_id, `policyKind_id`, `serial`, `number`, `begDate`,
                          `endDate`, `name`, `note`, `insuranceArea`)
-VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, {client_id}, 3307, 1, 3, 'ЕП', 
+VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, {client_id}, 3307, {policyType}, 3, 'ЕП', 
 '{policy_num}', '2020-02-17', '2200-01-01', 'РОСНО', 'СПБ', '7800000000000')""".format(
-        client_id=client_id, policy_num=policy_num)
-    result = get_stmt(client_policy_stmt)
+        client_id=client_id, policy_num=policy_num, policyType=policyType)
+    result = insert_stmt(client_policy_stmt)
     return result
 
 
@@ -118,7 +140,7 @@ INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`,
 VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, 
         {client_id}, 3, 1, '{contact_num}','mobile')""".format(
         client_id=client_id, contact_num=contact_num)
-    result = get_stmt(client_contact_stmt)
+    result = insert_stmt(client_contact_stmt)
     return result
 
 
@@ -128,7 +150,7 @@ INSERT INTO ClientAddress(`createDatetime`, `createPerson_id`, `modifyDatetime`,
 `type`, `address_id`, `district_id`, `isVillager`,`freeInput`)
 VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {client_id}, 0, {address_id}, 1, 0,'')""".format(
         client_id=client_id, address_id=address_id)
-    result = get_stmt(client_address_stmt)
+    result = insert_stmt(client_address_stmt)
     return result
 
 
@@ -138,7 +160,7 @@ INSERT INTO AddressHouse(`createDatetime`, `createPerson_id`, `modifyDatetime`, 
                          `KLADRStreetCode`, `number`, `corpus`)
 VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, '7800000000000', 
         '78000000000227000', '{number}', '1')""".format(number=rand_house)
-    result = get_stmt(address_house_stmt)
+    result = insert_stmt(address_house_stmt)
     return result
 
 
@@ -147,7 +169,7 @@ def get_address_id(address_house_id):
 INSERT INTO Address(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `house_id`, `flat`)
 VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {address_house_id}, '1')""".format(
         address_house_id=address_house_id)
-    result = get_stmt(add_address_stmt)
+    result = insert_stmt(add_address_stmt)
     return result
 
 
@@ -157,7 +179,7 @@ INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson
 org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
 VALUES (NOW(), 1, NOW(), 1, 0, '', 2, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)
     """.format(client_id=client_id)
-    result = get_stmt(add_event_stmt)
+    result = insert_stmt(add_event_stmt)
     return result
 
 
