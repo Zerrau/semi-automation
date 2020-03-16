@@ -133,7 +133,7 @@ VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, {client_id}, 3307
     return result
 
 
-def add_client_contract(client_id):
+def add_client_contact(client_id):
     client_contact_stmt = u"""
 INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                           `client_id`, `contactType_id`, `isPrimary`, `contact`,`notes`)
@@ -198,7 +198,7 @@ VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, 1, {client_id}, DATE(NOW()), 1, 
 # MAGIC:
 client_id = get_client_id()
 client_policy = add_client_policy(client_id)
-client_contract = add_client_contract(client_id)
+client_contact = add_client_contact(client_id)
 address_house_id = get_address_house_id()
 address_id = get_address_id(address_house_id)
 client_address = add_client_address(client_id, address_id)
