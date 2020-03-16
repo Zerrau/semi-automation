@@ -173,12 +173,24 @@ VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {address_house_id}, 
     return result
 
 
+def get_eventType():
+    eventType = u"""
+SELECT id
+FROM EventType
+WHERE name LIKE '%Лечебно-диагностический%'
+ORDER BY id
+LIMIT 1;"""
+    result = select_stmt(eventType)
+    return result[0][0]
+
+
 def add_event(client_id):
+    eventType = get_eventType()
     add_event_stmt = u"""
 INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson_id, deleted, externalId, eventType_id, 
 org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
-VALUES (NOW(), 1, NOW(), 1, 0, '', 2, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)
-    """.format(client_id=client_id)
+VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)
+    """.format(client_id=client_id, eventType=eventType)
     result = insert_stmt(add_event_stmt)
     return result
 
