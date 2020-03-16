@@ -15,7 +15,7 @@ PASSWORD = 'dbpassword'
 # DATA-BASE SETTINGS
 db = connector.connect(host=HOST, user=USER, passwd=PASSWORD, database=DB, port=PORT)
 db_cursor = db.cursor()
-DB_DEBUG = False
+DB_DEBUG = True
 
 # RANDOM DATA:
 policy_num = random.randint(1000000000000000, 9999999999999999)
@@ -27,9 +27,9 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Тест'
-firstName = u'Тест'
-patrName = u'Тест'
+lastName = u'Васильев'
+firstName = u'Василий'
+patrName = u'Васильевич'
 
 
 # FUNCTIONS:
@@ -87,13 +87,14 @@ def get_client_id():
 INSERT INTO Client(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, 
                    `lastName`, `firstName`, `patrName`,
                     `birthDate`, `birthTime`, `sex`, `SNILS`, `bloodNotes`, `growth`, `weight`,
-                   `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, `IIN`, 
-                   `isUnconscious`, `chronicalMKB`)
+                   `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, 
+                   `IIN`, `isUnconscious`, `chronicalMKB`)
 VALUES ('2020-02-12T18:29:40', 1, '2020-02-12T18:29:40', 1, 
         '{lastName}', '{firstName}', '{patrName}', 
         '{birthDate}', '00:00:00', 1, '{snils}', '', '0', '0', 
-        '0', 'СПБ', '', '2020-02-12', '', '', 
-        0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName, birthDate=birthDate, snils=snils)
+        '0', 'СПБ', '', '2020-02-12', '', 
+        '', 0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName,
+                             birthDate=birthDate, snils=snils)
     result = get_stmt(add_client_stmt)
     return result
 
@@ -125,8 +126,8 @@ def add_client_address(client_id, address_id):
     client_address_stmt = u"""
 INSERT INTO ClientAddress(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `client_id`, 
 `type`, `address_id`, `district_id`, `isVillager`,`freeInput`)
-VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {client_id}, 0, {address_id}, 1, 0,'')
-""".format(client_id=client_id, address_id=address_id)
+VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {client_id}, 0, {address_id}, 1, 0,'')""".format(
+        client_id=client_id, address_id=address_id)
     result = get_stmt(client_address_stmt)
     return result
 
@@ -150,6 +151,16 @@ VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {address_house_id}, 
     return result
 
 
+def add_event(client_id):
+    add_event_stmt = u"""
+INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson_id, deleted, externalId, eventType_id, 
+org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
+VALUES (NOW(), 1, NOW(), 1, 0, '', 2, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)
+    """.format(client_id=client_id)
+    result = get_stmt(add_event_stmt)
+    return result
+
+
 # MAGIC:
 client_id = get_client_id()
 client_policy = add_client_policy(client_id)
@@ -157,5 +168,8 @@ client_contract = add_client_contract(client_id)
 address_house_id = get_address_house_id()
 address_id = get_address_id(address_house_id)
 client_address = add_client_address(client_id, address_id)
-printed_client = u'Client_id = {client_id}'.format(client_id=client_id)
+event_id = add_event(client_id)
+printed_client = u'Client.id = {client_id}'.format(client_id=client_id)
+printed_event = u'Event.id = {event_id}'.format(event_id=event_id)
 print(printed_client)
+print(printed_event)
