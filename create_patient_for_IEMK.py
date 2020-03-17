@@ -30,7 +30,7 @@ rand_day = random.randint(1, 28)
 lastName = u'Иванов'
 firstName = u'Петр'
 patrName = u'Васильевич'
-policy_type_name = u'ОМС'  # ОМС/ДМС
+policy_type_name = u'ДМС'  # ОМС/ДМС
 diagnosis_mkb = u'D00.0'
 
 
@@ -111,11 +111,10 @@ VALUES ('2020-02-12T18:29:40', 1, '2020-02-12T18:29:40', 1,
 
 def get_format_policy():
     policyTypeStmt = u"""
-SELECT ClientPolicy.policyType_id
-FROM ClientPolicy
-INNER join rbPolicyType ON ClientPolicy.policyType_id = rbPolicyType.id
+SELECT id
+FROM rbPolicyType
 WHERE rbPolicyType.name LIKE '%{policy_type_name}%'
-AND deleted = 0
+ORDER BY id
 LIMIT 1""".format(policy_type_name=policy_type_name)
     result = select_stmt(policyTypeStmt)
     return result[0][0]
