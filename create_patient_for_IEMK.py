@@ -1,6 +1,6 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
-# Version: 2.0
+# Version: 3.0
 import random
 
 from mysql import connector
@@ -137,8 +137,8 @@ def get_client_document(client_id):
 INSERT INTO ClientDocument(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
 `client_id`, `documentType_id`, `serial`, `number`, `date`, `origin`) 
 VALUES (NOW(), 1, NOW(), 1, 0, 
-{client_id}, {document_type}, '{serial}', '{number}', '{date}', 'УФМС России')
-    """.format(client_id=client_id, document_type=document_type, serial=serial, number=number, date=date)
+{client_id}, {document_type}, '{serial}', '{number}', '{date}', 'УФМС России')""".format(
+        client_id=client_id, document_type=document_type, serial=serial, number=number, date=date)
     result = insert_stmt(add_document_stmt)
     return result
 
