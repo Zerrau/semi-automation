@@ -7,7 +7,7 @@ from mysql import connector
 
 # SETTINGS
 HOST = '192.168.0.3'
-DB = 'p17_testspb'
+DB = 'ptd5_1110'
 PORT = '3306'
 USER = 'dbuser'
 PASSWORD = 'dbpassword'
@@ -28,9 +28,9 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Сергеев'
-firstName = u'Сергей'
-patrName = u'Иванович'
+lastName = u'Семенов'
+firstName = u'Семен'
+patrName = u'Семенович'
 policy_type_name = u'ОМС'  # ОМС/ДМС
 diagnosis_mkb = u'D00.0'
 
@@ -207,6 +207,16 @@ VALUES (NOW(), 1, NOW(), 1, {address_house_id}, '1')""".format(
     return result
 
 
+def get_person_org():
+    org_stmt = u"""
+SELECT org_id 
+FROM Person 
+WHERE (lastName LIKE '%админ%' OR lastName LIKE '%виста%') AND org_id IS NOT NULL 
+LIMIT 1"""
+    result = select_stmt(org_stmt)
+    return result[0][0]
+
+
 def get_eventType():
     eventType = u"""
 SELECT id
@@ -219,12 +229,13 @@ LIMIT 1"""
 
 
 def add_event(client_id):
+    org_id = get_person_org()
     eventType = get_eventType()
     add_event_stmt = u"""
 INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson_id, deleted, externalId, eventType_id, 
 org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
-VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)""".format(
-        client_id=client_id, eventType=eventType)
+VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, {org_id}, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)""".format(
+        eventType=eventType, org_id=org_id, client_id=client_id)
     result = insert_stmt(add_event_stmt)
     return result
 
