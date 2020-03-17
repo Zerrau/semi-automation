@@ -27,10 +27,11 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Чуть'
-firstName = u'чуть'
+lastName = u'Иванов'
+firstName = u'Петр'
 patrName = u'Васильевич'
-policy_type_name = u'ДМС'  # ОМС/ДМС
+policy_type_name = u'ОМС'  # ОМС/ДМС
+diagnosis_mkb = u'D00.0'
 
 
 # FUNCTIONS:
@@ -179,7 +180,7 @@ SELECT id
 FROM EventType
 WHERE name LIKE '%Лечебно-диагностический%'
 ORDER BY id
-LIMIT 1;"""
+LIMIT 1"""
     result = select_stmt(eventType)
     return result[0][0]
 
@@ -189,9 +190,31 @@ def add_event(client_id):
     add_event_stmt = u"""
 INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson_id, deleted, externalId, eventType_id, 
 org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
-VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)
-    """.format(client_id=client_id, eventType=eventType)
+VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, 1, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)""".format(
+        client_id=client_id, eventType=eventType)
     result = insert_stmt(add_event_stmt)
+    return result
+
+
+def add_diagnosis(client_id):
+    diagnosis_stmt = u"""
+INSERT INTO Diagnosis(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, 
+`client_id`, `diagnosisType_id`, `character_id`, `MKB`, `MKBEx`, `endDate`, `person_id`) 
+VALUES (NOW(), 1, NOW(), 1, 
+{client_id}, 2, 3, '{diagnosis_mkb}', '', DATE(NOW()), 1)""".format(
+        client_id=client_id, diagnosis_mkb=diagnosis_mkb)
+    result = insert_stmt(diagnosis_stmt)
+    return result
+
+
+def add_diagnostic(event_id, diagnosis_id):
+    diagnostic_stmt = u"""
+INSERT INTO Diagnostic(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
+`event_id`, `diagnosis_id`, `TNMS`, `diagnosisType_id`, `character_id`, `person_id`, `result_id`, `setDate`, `endDate`) 
+VALUES (NOW(), 1, NOW(), 1, 0, 
+{event_id}, {diagnosis_id}, '', 2, 3, 1, 22, DATE(NOW()), DATE(NOW()))""".format(
+        event_id=event_id, diagnosis_id=diagnosis_id)
+    result = insert_stmt(diagnostic_stmt)
     return result
 
 
@@ -203,7 +226,10 @@ address_house_id = get_address_house_id()
 address_id = get_address_id(address_house_id)
 client_address = add_client_address(client_id, address_id)
 event_id = add_event(client_id)
+diagnosis_id = add_diagnosis(client_id)
+diagnostic_id = add_diagnostic(event_id, diagnosis_id)
 printed_client = u'Client.id = {client_id}'.format(client_id=client_id)
 printed_event = u'Event.id = {event_id}'.format(event_id=event_id)
+print(u'-----')
 print(printed_client)
 print(printed_event)
