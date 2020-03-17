@@ -20,17 +20,18 @@ DB_DEBUG = True
 # RANDOM DATA:
 policy_num = random.randint(1000000000000000, 9999999999999999)
 contact_num = random.randint(89900000000, 89999999999)
-snils_num = random.randint(00000000000, 99999999999)
+snils_num = random.randint(10000000000, 99999999999)
+rand_pas_num = random.randint(100000, 999999)
 rand_house = random.randint(1, 200)
 rand_yer = random.randint(1970, 1999)
 rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Иванов'
-firstName = u'Петр'
-patrName = u'Васильевич'
-policy_type_name = u'ДМС'  # ОМС/ДМС
+lastName = u'Сергеев'
+firstName = u'Сергей'
+patrName = u'Иванович'
+policy_type_name = u'ОМС'  # ОМС/ДМС
 diagnosis_mkb = u'D00.0'
 
 
@@ -90,6 +91,13 @@ def get_rand_date():
     return rand_date
 
 
+def get_rand_serial():
+    first_serial = random.randint(19, 99)
+    second_serial = random.randint(10, 99)
+    serial = u'{f} {s}'.format(f=first_serial, s=second_serial)
+    return serial
+
+
 def get_client_id():
     snils = checkSNILSEntered(snils_num)
     birthDate = get_rand_date()
@@ -99,13 +107,39 @@ INSERT INTO Client(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modif
                     `birthDate`, `birthTime`, `sex`, `SNILS`, `bloodNotes`, `growth`, `weight`,
                    `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, 
                    `IIN`, `isUnconscious`, `chronicalMKB`)
-VALUES ('2020-02-12T18:29:40', 1, '2020-02-12T18:29:40', 1, 
+VALUES (NOW(), 1, NOW(), 1, 
         '{lastName}', '{firstName}', '{patrName}', 
         '{birthDate}', '00:00:00', 1, '{snils}', '', '0', '0', 
         '0', 'СПБ', '', '2020-02-12', '', 
         '', 0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName,
                              birthDate=birthDate, snils=snils)
     result = insert_stmt(add_client_stmt)
+    return result
+
+
+def get_document_type():
+    document_type_stmt = u"""
+SELECT rbDocumentType.id 
+FROM rbDocumentType 
+WHERE rbDocumentType.name LIKE '%паспорт%'
+ORDER BY id
+LIMIT 1"""
+    result = select_stmt(document_type_stmt)
+    return result[0][0]
+
+
+def get_client_document(client_id):
+    document_type = get_document_type()
+    serial = get_rand_serial()
+    number = rand_pas_num
+    date = get_rand_date()
+    add_document_stmt = u"""
+INSERT INTO ClientDocument(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
+`client_id`, `documentType_id`, `serial`, `number`, `date`, `origin`) 
+VALUES (NOW(), 1, NOW(), 1, 0, 
+{client_id}, {document_type}, '{serial}', '{number}', '{date}', 'УФМС России')
+    """.format(client_id=client_id, document_type=document_type, serial=serial, number=number, date=date)
+    result = insert_stmt(add_document_stmt)
     return result
 
 
@@ -126,7 +160,7 @@ def add_client_policy(client_id):
 INSERT INTO ClientPolicy(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                          `client_id`, `insurer_id`, policyType_id, `policyKind_id`, `serial`, `number`, `begDate`,
                          `endDate`, `name`, `note`, `insuranceArea`)
-VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, {client_id}, 3307, {policyType}, 3, 'ЕП', 
+VALUES (NOW(), 1, NOW(), 1, 0, {client_id}, 3307, {policyType}, 3, 'ЕП', 
 '{policy_num}', '2020-02-17', '2200-01-01', 'РОСНО', 'СПБ', '7800000000000')""".format(
         client_id=client_id, policy_num=policy_num, policyType=policyType)
     result = insert_stmt(client_policy_stmt)
@@ -137,7 +171,7 @@ def add_client_contact(client_id):
     client_contact_stmt = u"""
 INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                           `client_id`, `contactType_id`, `isPrimary`, `contact`,`notes`)
-VALUES ('2020-02-17T11:09:42', 1, '2020-02-17T11:09:42', 1, 0, 
+VALUES (NOW(), 1, NOW(), 1, 0, 
         {client_id}, 3, 1, '{contact_num}','mobile')""".format(
         client_id=client_id, contact_num=contact_num)
     result = insert_stmt(client_contact_stmt)
@@ -148,7 +182,7 @@ def add_client_address(client_id, address_id):
     client_address_stmt = u"""
 INSERT INTO ClientAddress(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `client_id`, 
 `type`, `address_id`, `district_id`, `isVillager`,`freeInput`)
-VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {client_id}, 0, {address_id}, 1, 0,'')""".format(
+VALUES (NOW(), 1, NOW(), 1, {client_id}, 0, {address_id}, 1, 0,'')""".format(
         client_id=client_id, address_id=address_id)
     result = insert_stmt(client_address_stmt)
     return result
@@ -158,7 +192,7 @@ def get_address_house_id():
     address_house_stmt = u"""
 INSERT INTO AddressHouse(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `KLADRCode`,
                          `KLADRStreetCode`, `number`, `corpus`)
-VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, '7800000000000', 
+VALUES (NOW(), 1, NOW(), 1, '7800000000000', 
         '78000000000227000', '{number}', '1')""".format(number=rand_house)
     result = insert_stmt(address_house_stmt)
     return result
@@ -167,7 +201,7 @@ VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, '7800000000000',
 def get_address_id(address_house_id):
     add_address_stmt = u"""
 INSERT INTO Address(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `house_id`, `flat`)
-VALUES ('2020-02-17T11:28:00', 1, '2020-02-17T11:28:00', 1, {address_house_id}, '1')""".format(
+VALUES (NOW(), 1, NOW(), 1, {address_house_id}, '1')""".format(
         address_house_id=address_house_id)
     result = insert_stmt(add_address_stmt)
     return result
@@ -219,6 +253,7 @@ VALUES (NOW(), 1, NOW(), 1, 0,
 
 # MAGIC:
 client_id = get_client_id()
+client_document = get_client_document(client_id)
 client_policy = add_client_policy(client_id)
 client_contact = add_client_contact(client_id)
 address_house_id = get_address_house_id()
