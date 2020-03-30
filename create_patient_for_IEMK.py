@@ -6,8 +6,8 @@ import random
 from mysql import connector
 
 # SETTINGS
-HOST = '192.168.0.3'
-DB = 'ptd5_1110'
+HOST = '192.168.0.204'  # pacs
+DB = 's12'
 PORT = '3306'
 USER = 'dbuser'
 PASSWORD = 'dbpassword'
@@ -28,9 +28,9 @@ rand_mon = random.randint(1, 12)
 rand_day = random.randint(1, 28)
 
 # PATIENT DATA:
-lastName = u'Семенов'
-firstName = u'Семен'
-patrName = u'Семенович'
+lastName = u'Тест'
+firstName = u'Тест'
+patrName = u'Тест'
 policy_type_name = u'ОМС'  # ОМС/ДМС
 diagnosis_mkb = u'D00.0'
 
@@ -98,7 +98,17 @@ def get_rand_serial():
     return serial
 
 
+def set_person_id():
+    personIdStmt = u"""
+SELECT id
+FROM Person where lastName like '%админ%' or lastName like '%виста%' AND org_id IS NOT NULL
+LIMIT 1"""
+    result = select_stmt(personIdStmt)
+    return result[0][0]
+
+
 def get_client_id():
+    person_id = set_person_id()
     snils = checkSNILSEntered(snils_num)
     birthDate = get_rand_date()
     add_client_stmt = u"""
@@ -107,12 +117,12 @@ INSERT INTO Client(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modif
                     `birthDate`, `birthTime`, `sex`, `SNILS`, `bloodNotes`, `growth`, `weight`,
                    `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, 
                    `IIN`, `isUnconscious`, `chronicalMKB`)
-VALUES (NOW(), 1, NOW(), 1, 
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 
         '{lastName}', '{firstName}', '{patrName}', 
         '{birthDate}', '00:00:00', 1, '{snils}', '', '0', '0', 
         '0', 'СПБ', '', '2020-02-12', '', 
         '', 0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName,
-                             birthDate=birthDate, snils=snils)
+                             birthDate=birthDate, snils=snils, person_id=person_id)
     result = insert_stmt(add_client_stmt)
     return result
 
@@ -129,6 +139,7 @@ LIMIT 1"""
 
 
 def get_client_document(client_id):
+    person_id = set_person_id()
     document_type = get_document_type()
     serial = get_rand_serial()
     number = rand_pas_num
@@ -136,9 +147,9 @@ def get_client_document(client_id):
     add_document_stmt = u"""
 INSERT INTO ClientDocument(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
 `client_id`, `documentType_id`, `serial`, `number`, `date`, `origin`) 
-VALUES (NOW(), 1, NOW(), 1, 0, 
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, 
 {client_id}, {document_type}, '{serial}', '{number}', '{date}', 'УФМС России')""".format(
-        client_id=client_id, document_type=document_type, serial=serial, number=number, date=date)
+        client_id=client_id, document_type=document_type, serial=serial, number=number, date=date, person_id=person_id)
     result = insert_stmt(add_document_stmt)
     return result
 
@@ -155,54 +166,59 @@ LIMIT 1""".format(policy_type_name=policy_type_name)
 
 
 def add_client_policy(client_id):
+    person_id = set_person_id()
     policyType = get_format_policy()
     client_policy_stmt = u"""
 INSERT INTO ClientPolicy(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                          `client_id`, `insurer_id`, policyType_id, `policyKind_id`, `serial`, `number`, `begDate`,
                          `endDate`, `name`, `note`, `insuranceArea`)
-VALUES (NOW(), 1, NOW(), 1, 0, {client_id}, 3307, {policyType}, 3, 'ЕП', 
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, {client_id}, 3307, {policyType}, 3, 'ЕП', 
 '{policy_num}', '2020-02-17', '2200-01-01', 'РОСНО', 'СПБ', '7800000000000')""".format(
-        client_id=client_id, policy_num=policy_num, policyType=policyType)
+        client_id=client_id, policy_num=policy_num, policyType=policyType, person_id=person_id)
     result = insert_stmt(client_policy_stmt)
     return result
 
 
 def add_client_contact(client_id):
+    person_id = set_person_id()
     client_contact_stmt = u"""
 INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                           `client_id`, `contactType_id`, `isPrimary`, `contact`,`notes`)
-VALUES (NOW(), 1, NOW(), 1, 0, 
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, 
         {client_id}, 3, 1, '{contact_num}','mobile')""".format(
-        client_id=client_id, contact_num=contact_num)
+        client_id=client_id, contact_num=contact_num, person_id=person_id)
     result = insert_stmt(client_contact_stmt)
     return result
 
 
 def add_client_address(client_id, address_id):
+    person_id = set_person_id()
     client_address_stmt = u"""
 INSERT INTO ClientAddress(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `client_id`, 
 `type`, `address_id`, `district_id`, `isVillager`,`freeInput`)
-VALUES (NOW(), 1, NOW(), 1, {client_id}, 0, {address_id}, 1, 0,'')""".format(
-        client_id=client_id, address_id=address_id)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, {client_id}, 0, {address_id}, 1, 0,'')""".format(
+        client_id=client_id, address_id=address_id, person_id=person_id)
     result = insert_stmt(client_address_stmt)
     return result
 
 
 def get_address_house_id():
+    person_id = set_person_id()
     address_house_stmt = u"""
 INSERT INTO AddressHouse(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `KLADRCode`,
                          `KLADRStreetCode`, `number`, `corpus`)
-VALUES (NOW(), 1, NOW(), 1, '7800000000000', 
-        '78000000000227000', '{number}', '1')""".format(number=rand_house)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, '7800000000000', 
+        '78000000000227000', '{number}', '1')""".format(number=rand_house, person_id=person_id)
     result = insert_stmt(address_house_stmt)
     return result
 
 
 def get_address_id(address_house_id):
+    person_id = set_person_id()
     add_address_stmt = u"""
 INSERT INTO Address(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `house_id`, `flat`)
-VALUES (NOW(), 1, NOW(), 1, {address_house_id}, '1')""".format(
-        address_house_id=address_house_id)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, {address_house_id}, '1')""".format(
+        address_house_id=address_house_id, person_id=person_id)
     result = insert_stmt(add_address_stmt)
     return result
 
@@ -229,35 +245,39 @@ LIMIT 1"""
 
 
 def add_event(client_id):
+    person_id = set_person_id()
     org_id = get_person_org()
     eventType = get_eventType()
     add_event_stmt = u"""
 INSERT INTO Event (createDatetime, createPerson_id, modifyDatetime, modifyPerson_id, deleted, externalId, eventType_id, 
 org_id, client_id, setDate, isPrimary, `order`, payStatus, note, pregnancyWeek, totalCost)
-VALUES (NOW(), 1, NOW(), 1, 0, '', {eventType}, {org_id}, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)""".format(
-        eventType=eventType, org_id=org_id, client_id=client_id)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, '', {eventType}, 
+{org_id}, {client_id}, DATE(NOW()), 1, 1, 0, 'note', 0, 0.0)""".format(
+        eventType=eventType, org_id=org_id, client_id=client_id, person_id=person_id)
     result = insert_stmt(add_event_stmt)
     return result
 
 
 def add_diagnosis(client_id):
+    person_id = set_person_id()
     diagnosis_stmt = u"""
 INSERT INTO Diagnosis(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, 
 `client_id`, `diagnosisType_id`, `character_id`, `MKB`, `MKBEx`, `endDate`, `person_id`) 
-VALUES (NOW(), 1, NOW(), 1, 
-{client_id}, 2, 3, '{diagnosis_mkb}', '', DATE(NOW()), 1)""".format(
-        client_id=client_id, diagnosis_mkb=diagnosis_mkb)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 
+{client_id}, 2, 3, '{diagnosis_mkb}', '', DATE(NOW()), {person_id})""".format(
+        client_id=client_id, diagnosis_mkb=diagnosis_mkb, person_id=person_id)
     result = insert_stmt(diagnosis_stmt)
     return result
 
 
 def add_diagnostic(event_id, diagnosis_id):
+    person_id = set_person_id()
     diagnostic_stmt = u"""
 INSERT INTO Diagnostic(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
 `event_id`, `diagnosis_id`, `TNMS`, `diagnosisType_id`, `character_id`, `person_id`, `result_id`, `setDate`, `endDate`) 
-VALUES (NOW(), 1, NOW(), 1, 0, 
-{event_id}, {diagnosis_id}, '', 2, 3, 1, 22, DATE(NOW()), DATE(NOW()))""".format(
-        event_id=event_id, diagnosis_id=diagnosis_id)
+VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, 
+{event_id}, {diagnosis_id}, '', 2, 3, {person_id}, 22, DATE(NOW()), DATE(NOW()))""".format(
+        event_id=event_id, diagnosis_id=diagnosis_id, person_id=person_id)
     result = insert_stmt(diagnostic_stmt)
     return result
 
