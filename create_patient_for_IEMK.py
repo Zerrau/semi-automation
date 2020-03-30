@@ -107,8 +107,7 @@ LIMIT 1"""
     return result[0][0]
 
 
-def get_client_id():
-    person_id = set_person_id()
+def get_client_id(person_id):
     snils = checkSNILSEntered(snils_num)
     birthDate = get_rand_date()
     add_client_stmt = u"""
@@ -138,8 +137,7 @@ LIMIT 1"""
     return result[0][0]
 
 
-def get_client_document(client_id):
-    person_id = set_person_id()
+def get_client_document(client_id, person_id):
     document_type = get_document_type()
     serial = get_rand_serial()
     number = rand_pas_num
@@ -165,8 +163,7 @@ LIMIT 1""".format(policy_type_name=policy_type_name)
     return result[0][0]
 
 
-def add_client_policy(client_id):
-    person_id = set_person_id()
+def add_client_policy(client_id, person_id):
     policyType = get_format_policy()
     client_policy_stmt = u"""
 INSERT INTO ClientPolicy(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
@@ -179,8 +176,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, {client_id}, 3307, {policyTyp
     return result
 
 
-def add_client_contact(client_id):
-    person_id = set_person_id()
+def add_client_contact(client_id, person_id):
     client_contact_stmt = u"""
 INSERT INTO ClientContact(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`,
                           `client_id`, `contactType_id`, `isPrimary`, `contact`,`notes`)
@@ -191,8 +187,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, 0,
     return result
 
 
-def add_client_address(client_id, address_id):
-    person_id = set_person_id()
+def add_client_address(client_id, address_id, person_id):
     client_address_stmt = u"""
 INSERT INTO ClientAddress(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `client_id`, 
 `type`, `address_id`, `district_id`, `isVillager`,`freeInput`)
@@ -202,8 +197,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, {client_id}, 0, {address_id}, 1,
     return result
 
 
-def get_address_house_id():
-    person_id = set_person_id()
+def get_address_house_id(person_id):
     address_house_stmt = u"""
 INSERT INTO AddressHouse(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `KLADRCode`,
                          `KLADRStreetCode`, `number`, `corpus`)
@@ -213,8 +207,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, '7800000000000',
     return result
 
 
-def get_address_id(address_house_id):
-    person_id = set_person_id()
+def get_address_id(address_house_id, person_id):
     add_address_stmt = u"""
 INSERT INTO Address(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `house_id`, `flat`)
 VALUES (NOW(), {person_id}, NOW(), {person_id}, {address_house_id}, '1')""".format(
@@ -244,8 +237,7 @@ LIMIT 1"""
     return result[0][0]
 
 
-def add_event(client_id):
-    person_id = set_person_id()
+def add_event(client_id, person_id):
     org_id = get_person_org()
     eventType = get_eventType()
     add_event_stmt = u"""
@@ -258,8 +250,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, '', {eventType},
     return result
 
 
-def add_diagnosis(client_id):
-    person_id = set_person_id()
+def add_diagnosis(client_id, person_id):
     diagnosis_stmt = u"""
 INSERT INTO Diagnosis(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, 
 `client_id`, `diagnosisType_id`, `character_id`, `MKB`, `MKBEx`, `endDate`, `person_id`) 
@@ -270,8 +261,7 @@ VALUES (NOW(), {person_id}, NOW(), {person_id},
     return result
 
 
-def add_diagnostic(event_id, diagnosis_id):
-    person_id = set_person_id()
+def add_diagnostic(event_id, diagnosis_id, person_id):
     diagnostic_stmt = u"""
 INSERT INTO Diagnostic(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
 `event_id`, `diagnosis_id`, `TNMS`, `diagnosisType_id`, `character_id`, `person_id`, `result_id`, `setDate`, `endDate`) 
@@ -283,18 +273,21 @@ VALUES (NOW(), {person_id}, NOW(), {person_id}, 0,
 
 
 # MAGIC:
-client_id = get_client_id()
-client_document = get_client_document(client_id)
-client_policy = add_client_policy(client_id)
-client_contact = add_client_contact(client_id)
-address_house_id = get_address_house_id()
-address_id = get_address_id(address_house_id)
-client_address = add_client_address(client_id, address_id)
-event_id = add_event(client_id)
-diagnosis_id = add_diagnosis(client_id)
-diagnostic_id = add_diagnostic(event_id, diagnosis_id)
+person_id = set_person_id()
+client_id = get_client_id(person_id)
+client_document = get_client_document(client_id, person_id)
+client_policy = add_client_policy(client_id, person_id)
+client_contact = add_client_contact(client_id, person_id)
+address_house_id = get_address_house_id(person_id)
+address_id = get_address_id(address_house_id, person_id)
+client_address = add_client_address(client_id, address_id, person_id)
+event_id = add_event(client_id, person_id)
+diagnosis_id = add_diagnosis(client_id, person_id)
+diagnostic_id = add_diagnostic(event_id, diagnosis_id, person_id)
+printed_person = u'Person.id = {person_id}'.format(person_id=person_id)
 printed_client = u'Client.id = {client_id}'.format(client_id=client_id)
 printed_event = u'Event.id = {event_id}'.format(event_id=event_id)
 print(u'-----')
+print(printed_person)
 print(printed_client)
 print(printed_event)
