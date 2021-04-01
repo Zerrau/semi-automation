@@ -6,9 +6,9 @@ import random
 from mysql import connector
 
 # SETTINGS
-HOST = '192.168.0.204'  # pacs
-DB = 's12'
-PORT = '3306'
+HOST = 'neftu1'  # 192.168.0.3
+DB = 's11'
+PORT = '33306'
 USER = 'dbuser'
 PASSWORD = 'dbpassword'
 
@@ -115,12 +115,12 @@ INSERT INTO Client(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modif
                    `lastName`, `firstName`, `patrName`,
                     `birthDate`, `birthTime`, `sex`, `SNILS`, `bloodNotes`, `growth`, `weight`,
                    `embryonalPeriodWeek`, `birthPlace`, `diagNames`, `chartBeginDate`, `notes`, 
-                   `IIN`, `isUnconscious`, `chronicalMKB`)
+                   `IIN`, `isUnconscious`)
 VALUES (NOW(), {person_id}, NOW(), {person_id}, 
         '{lastName}', '{firstName}', '{patrName}', 
         '{birthDate}', '00:00:00', 1, '{snils}', '', '0', '0', 
         '0', 'СПБ', '', '2020-02-12', '', 
-        '', 0, '')""".format(lastName=lastName, firstName=firstName, patrName=patrName,
+        '', 0)""".format(lastName=lastName, firstName=firstName, patrName=patrName,
                              birthDate=birthDate, snils=snils, person_id=person_id)
     result = insert_stmt(add_client_stmt)
     return result
@@ -237,6 +237,15 @@ LIMIT 1"""
     return result[0][0]
 
 
+def get_result_id():
+    resultStmt = u"""
+SELECT id from rbDiagnosticResult 
+where name like '%Выздоровление%' limit 1 
+"""
+    result = select_stmt(resultStmt)
+    return result[0][0]
+
+
 def add_event(client_id, person_id):
     org_id = get_person_org()
     eventType = get_eventType()
@@ -262,12 +271,13 @@ VALUES (NOW(), {person_id}, NOW(), {person_id},
 
 
 def add_diagnostic(event_id, diagnosis_id, person_id):
+    result_id = get_result_id()
     diagnostic_stmt = u"""
 INSERT INTO Diagnostic(`createDatetime`, `createPerson_id`, `modifyDatetime`, `modifyPerson_id`, `deleted`, 
 `event_id`, `diagnosis_id`, `TNMS`, `diagnosisType_id`, `character_id`, `person_id`, `result_id`, `setDate`, `endDate`) 
 VALUES (NOW(), {person_id}, NOW(), {person_id}, 0, 
-{event_id}, {diagnosis_id}, '', 2, 3, {person_id}, 22, DATE(NOW()), DATE(NOW()))""".format(
-        event_id=event_id, diagnosis_id=diagnosis_id, person_id=person_id)
+{event_id}, {diagnosis_id}, '', 2, 3, {person_id}, '{result_id}', DATE(NOW()), DATE(NOW()))""".format(
+        event_id=event_id, diagnosis_id=diagnosis_id, person_id=person_id, result_id=result_id)
     result = insert_stmt(diagnostic_stmt)
     return result
 
